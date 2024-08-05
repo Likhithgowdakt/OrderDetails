@@ -1,40 +1,24 @@
-This is for backenc
-Yes, it's definitely possible and often necessary to create multiple tables in a database schema, especially for more complex applications. In relational databases, you might use multiple tables to normalize data, establish relationships, and ensure data integrity.
+Java with Spring Boot
 
-Here’s a basic example of how to design a schema with two related tables in a Spring Boot application using MySQL. I'll walk you through creating a simple e-commerce system with `Order` and `Customer` tables.
+Set Up
+Spring Web
+MySQL Driver
+Spring Data JPA
+Spring Boot Dev Tools
 
-### **1. Define the Database Schema**
+class Order
 
-Assume we have two tables: `orders` and `customers`. Each order is associated with a customer.
+package CompanyStore.io.order;
 
-**`orders` Table Schema:**
-- `order_no` (Primary Key)
-- `sku`
-- `shipped_qty`
-- `status`
-- `ship_date`
-- `delivered_date`
-- `transporter`
-- `transporter_code`
-- `channel`
-- `customer_id` (Foreign Key referencing `customers.id`)
-
-**`customers` Table Schema:**
-- `id` (Primary Key)
-- `name`
-- `email`
-- `phone`
-- `address`
-
-### **2. Create the Entity Classes**
-
-**Order Entity**
-
-```java
-package com.example.demo.entity;
-
-import javax.persistence.*;
 import java.util.Date;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "orders")
@@ -56,78 +40,167 @@ public class Order {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    // Getters and Setters
+	public int getOrder_no() {
+		return order_no;
+	}
+
+	public void setOrder_no(int order_no) {
+		this.order_no = order_no;
+	}
+
+	public String getSku() {
+		return sku;
+	}
+
+	public void setSku(String sku) {
+		this.sku = sku;
+	}
+
+	public int getShipped_qty() {
+		return shipped_qty;
+	}
+
+	public void setShipped_qty(int shipped_qty) {
+		this.shipped_qty = shipped_qty;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getShip_date() {
+		return ship_date;
+	}
+
+	public void setShip_date(Date ship_date) {
+		this.ship_date = ship_date;
+	}
+
+	public Date getDelivered_date() {
+		return delivered_date;
+	}
+
+	public void setDelivered_date(Date delivered_date) {
+		this.delivered_date = delivered_date;
+	}
+
+	public String getTransporter() {
+		return transporter;
+	}
+
+	public void setTransporter(String transporter) {
+		this.transporter = transporter;
+	}
+
+	public int getTransporter_code() {
+		return transporter_code;
+	}
+
+	public void setTransporter_code(int transporter_code) {
+		this.transporter_code = transporter_code;
+	}
+
+	public String getChannel() {
+		return channel;
+	}
+
+	public void setChannel(String channel) {
+		this.channel = channel;
+	}
+
+	public Customer getCustomer() {
+		return customer;
+	}
+
+	public void setCustomer(Customer customer) {
+		this.customer = customer;
+	}
+
+    
 }
-```
 
-**Customer Entity**
 
-```java
-package com.example.demo.entity;
 
-import javax.persistence.*;
+class OrderController
+
+package CompanyStore.io.order;
+
+import CompanyStore.io.order.*;
+//import com.example.demo.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+import java.util.Optional;
 
-@Entity
-@Table(name = "customers")
-public class Customer {
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String name;
-    private String email;
-    private String phone;
-    private String address;
+    @Autowired
+    private OrderService orderService;
 
-    @OneToMany(mappedBy = "customer")
-    private List<Order> orders;
+    @GetMapping
+    public List<Order> getAllOrders() {
+        return orderService.getAllOrders();
+    }
 
-    // Getters and Setters
+    @GetMapping("/{orderNo}")
+    public ResponseEntity<Order> getOrderById(@PathVariable int orderNo) {
+        Optional<Order> order = orderService.getOrderById(orderNo);
+        return order.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
+        Order createdOrder = orderService.createOrder(order);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
+    }
+
+    @PutMapping("/{orderNo}")
+    public ResponseEntity<Order> updateOrder(@PathVariable int orderNo, @RequestBody Order orderDetails) {
+        Order updatedOrder = orderService.updateOrder(orderNo, orderDetails);
+        return ResponseEntity.ok(updatedOrder);
+    }
+
+    @DeleteMapping("/{orderNo}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable int orderNo) {
+        orderService.deleteOrder(orderNo);
+        return ResponseEntity.noContent().build();
+    }
 }
-```
 
-### **3. Create the Repository Interfaces**
 
-**OrderRepository**
 
-```java
-package com.example.demo.repository;
+OrderRepository
 
-import com.example.demo.entity.Order;
+package CompanyStore.io.order;
+
+import CompanyStore.io.order.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 }
-```
 
-**CustomerRepository**
 
-```java
-package com.example.demo.repository;
 
-import com.example.demo.entity.Customer;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+OrderService
 
-@Repository
-public interface CustomerRepository extends JpaRepository<Customer, Integer> {
-}
-```
+package CompanyStore.io.order;
 
-### **4. Update the Service Layer**
+//package com.example.demo.service;
 
-**OrderService**
-
-```java
-package com.example.demo.service;
-
-import com.example.demo.entity.Order;
-import com.example.demo.entity.Customer;
-import com.example.demo.repository.OrderRepository;
-import com.example.demo.repository.CustomerRepository;
+import CompanyStore.io.order.*;
+//import CompanyStore.io.order.repository.OrderRepository;
+//import CompanyStore.io.order.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -176,119 +249,103 @@ public class OrderService {
         orderRepository.deleteById(orderNo);
     }
 }
-```
 
-**CustomerService**
 
-```java
-package com.example.demo.service;
 
-import com.example.demo.entity.Customer;
-import com.example.demo.repository.CustomerRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+Class Customer
+
+package CompanyStore.io.order;
 
 import java.util.List;
-import java.util.Optional;
 
-@Service
-public class CustomerService {
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
-    @Autowired
-    private CustomerRepository customerRepository;
+@Entity
+@Table(name = "customers")
+public class Customer {
 
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    private String name;
+    private String email;
+    private String phone;
+    private String address;
 
-    public Optional<Customer> getCustomerById(int id) {
-        return customerRepository.findById(id);
-    }
+    @OneToMany(mappedBy = "customer")
+    private List<Order> orders;
 
-    public Customer createCustomer(Customer customer) {
-        return customerRepository.save(customer);
-    }
+	public int getId() {
+		return id;
+	}
 
-    public Customer updateCustomer(int id, Customer customerDetails) {
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Customer not found with id " + id));
+	public void setId(int id) {
+		this.id = id;
+	}
 
-        customer.setName(customerDetails.getName());
-        customer.setEmail(customerDetails.getEmail());
-        customer.setPhone(customerDetails.getPhone());
-        customer.setAddress(customerDetails.getAddress());
+	public String getName() {
+		return name;
+	}
 
-        return customerRepository.save(customer);
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public void deleteCustomer(int id) {
-        customerRepository.deleteById(id);
-    }
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public List<Order> getOrders() {
+		return orders;
+	}
+
+	public void setOrders(List<Order> orders) {
+		this.orders = orders;
+	}
+
+    
 }
-```
 
-### **5. Update the Controller Layer**
 
-**OrderController**
 
-```java
-package com.example.demo.controller;
 
-import com.example.demo.entity.Order;
-import com.example.demo.service.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/orders")
-public class OrderController {
+CustomerController
 
-    @Autowired
-    private OrderService orderService;
 
-    @GetMapping
-    public List<Order> getAllOrders() {
-        return orderService.getAllOrders();
-    }
 
-    @GetMapping("/{orderNo}")
-    public ResponseEntity<Order> getOrderById(@PathVariable int orderNo) {
-        Optional<Order> order = orderService.getOrderById(orderNo);
-        return order.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
 
-    @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        Order createdOrder = orderService.createOrder(order);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
-    }
+package CompanyStore.io.order;
 
-    @PutMapping("/{orderNo}")
-    public ResponseEntity<Order> updateOrder(@PathVariable int orderNo, @RequestBody Order orderDetails) {
-        Order updatedOrder = orderService.updateOrder(orderNo, orderDetails);
-        return ResponseEntity.ok(updatedOrder);
-    }
 
-    @DeleteMapping("/{orderNo}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable int orderNo) {
-        orderService.deleteOrder(orderNo);
-        return ResponseEntity.noContent().build();
-    }
-}
-```
-
-**CustomerController**
-
-```java
-package com.example.demo.controller;
-
-import com.example.demo.entity.Customer;
-import com.example.demo.service.CustomerService;
+import CompanyStore.io.order.*;
+//import com.example.demo.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -333,53 +390,118 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
 }
-```
-
-### **6. Testing Your API**
-
-You can use Postman or any API client to test the CRUD operations for both `Order` and `Customer` entities.
-
-- **Orders API:**
-  - `GET /api/orders`
-  - `GET /api/orders/{orderNo}`
-  - `POST /api/orders` (with order details in the body)
-  - `PUT /api/orders/{orderNo}` (with updated order details in the body)
-  - `DELETE /api/orders/{orderNo}`
-
-- **Customers API:**
-  - `GET /api/customers`
-  - `GET /api/customers/{id}`
-  - `POST /api/customers` (with customer details in the body)
-  - `PUT /api/customers/{id}` (with updated customer details in the body)
-  - `DELETE /api/customers/{id}`
-
-This setup demonstrates a basic relationship between `Order` and `Customer` tables in a Spring Boot application with MySQL. Adjust the entities, services, and controllers according to your specific requirements and business logic.
 
 
 
+CustomerRepository
+
+package CompanyStore.io.order;
+
+import CompanyStore.io.order.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CustomerRepository extends JpaRepository<Customer, Integer> {
+}
+
+
+
+CustomerService
+
+package CompanyStore.io.order;
+
+
+import CompanyStore.io.order.*;
+//import com.example.demo.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class CustomerService {
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    public List<Customer> getAllCustomers() {
+        return customerRepository.findAll();
+    }
+
+    public Optional<Customer> getCustomerById(int id) {
+        return customerRepository.findById(id);
+    }
+
+    public Customer createCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+
+    public Customer updateCustomer(int id, Customer customerDetails) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Customer not found with id " + id));
+
+        customer.setName(customerDetails.getName());
+        customer.setEmail(customerDetails.getEmail());
+        customer.setPhone(customerDetails.getPhone());
+        customer.setAddress(customerDetails.getAddress());
+
+        return customerRepository.save(customer);
+    }
+
+    public void deleteCustomer(int id) {
+        customerRepository.deleteById(id);
+    }
+}
 
 
 
 
+Application Properties
+spring.datasource.url=jdbc:mysql://localhost:3306/order_management
+spring.datasource.username=root
+spring.datasource.password=Likhith@0817
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.database-platform=org.hibernate.dialect.MySQL5Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+
+
+Other
+#spring.application.name=Order_Management
+## Server configuration
+#server.port=8080
+#
+## Database configuration
+#spring.datasource.url=jdbc:mysql://localhost:3306/order_management
+#spring.datasource.username=root
+#spring.datasource.password=Likhith@0817
+#spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+#spring.jpa.hibernate.ddl-auto=update
+#
+## Hibernate Configuration
+#spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+#spring.jpa.show-sql=true
+#
+## Logging Configuration
+#logging.level.org.springframework.web=DEBUG
+#logging.level.com.example.ordermanagement=DEBUG
+#
+## Custom application properties
+#app.orders.default-status=Pending
+#app.orders.max-entries-per-page=20
 
 
 
 
+DATABASE
+
+CUSTOMERS
 
 
-
-
-
-
-This is for DB
-
-Certainly! Here are the MySQL queries to create and manage the `orders` and `customers` tables, including the schema design and CRUD operations.
-
-### **1. Create the Tables**
-
-**`customers` Table**
-
-```sql
 CREATE TABLE customers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -387,11 +509,9 @@ CREATE TABLE customers (
     phone VARCHAR(15),
     address TEXT
 );
-```
 
-**`orders` Table**
 
-```sql
+ORDERS
 CREATE TABLE orders (
     order_no INT AUTO_INCREMENT PRIMARY KEY,
     sku VARCHAR(50) NOT NULL,
@@ -405,125 +525,39 @@ CREATE TABLE orders (
     customer_id INT,
     FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
-```
 
-### **2. Insert Records**
 
-**Insert into `customers`**
 
-```sql
-INSERT INTO customers (name, email, phone, address) 
-VALUES ('John Doe', 'john.doe@example.com', '123-456-7890', '123 Main St, Anytown, USA'),
-       ('Jane Smith', 'jane.smith@example.com', '987-654-3210', '456 Elm St, Othertown, USA');
-```
+Insert Customers
 
-**Insert into `orders`**
+INSERT INTO customers (name, email, phone, address)
+VALUES
+('John Doe', 'john@example.com', '1234567890', '123 Elm St'),
+('Jane Smith', 'jane@example.com', '0987654321', '456 Oak St');
 
-```sql
-INSERT INTO orders (sku, shipped_qty, status, ship_date, delivered_date, transporter, transporter_code, channel, customer_id) 
-VALUES ('SKU12345', 10, 'Shipped', '2024-07-01', '2024-07-05', 'FedEx', 123, 'Online', 1),
-       ('SKU67890', 5, 'Delivered', '2024-06-15', '2024-06-20', 'UPS', 456, 'In-Store', 2);
-```
 
-### **3. Read Records**
 
-**Select All from `customers`**
+Insert Orders
 
-```sql
-SELECT * FROM customers;
-```
+INSERT INTO orders (sku, shipped_qty, status, ship_date, delivered_date, transporter, transporter_code, channel, customer_id)
+VALUES
+('SKU123', 10, 'Shipped', '2024-08-01', NULL, 'DHL', 12345, 'Online', 1),
+('SKU124', 5, 'Delivered', '2024-07-28', '2024-08-02', 'FedEx', 67890, 'Retail', 2);
 
-**Select All from `orders`**
 
-```sql
-SELECT * FROM orders;
-```
 
-**Select Orders by Customer**
 
-```sql
-SELECT * FROM orders WHERE customer_id = 1;
-```
+SELECT * From Customers;
 
-**Join Orders with Customers**
+Select * from Orders;
 
-```sql
-SELECT o.order_no, o.sku, o.shipped_qty, o.status, c.name AS customer_name
+SELECT o.*, c.name, c.email
 FROM orders o
 JOIN customers c ON o.customer_id = c.id;
-```
-
-### **4. Update Records**
-
-**Update a Customer**
-
-```sql
-UPDATE customers 
-SET phone = '111-222-3333', address = '789 Pine St, Newtown, USA'
-WHERE id = 1;
-```
-
-**Update an Order**
-
-```sql
-UPDATE orders 
-SET status = 'In Transit', ship_date = '2024-07-02'
-WHERE order_no = 1;
-```
-
-### **5. Delete Records**
-
-**Delete a Customer**
-
-```sql
-DELETE FROM customers 
-WHERE id = 1;
-```
-
-**Delete an Order**
-
-```sql
-DELETE FROM orders 
-WHERE order_no = 1;
-```
-
-### **6. Additional Queries**
-
-**Find Orders Shipped in a Specific Month**
-
-```sql
-SELECT * FROM orders 
-WHERE MONTH(ship_date) = 7 AND YEAR(ship_date) = 2024;
-```
-
-**Count Orders per Customer**
-
-```sql
-SELECT customer_id, COUNT(*) AS order_count
-FROM orders
-GROUP BY customer_id;
-```
-
-**Find Customers with No Orders**
-
-```sql
-SELECT c.*
-FROM customers c
-LEFT JOIN orders o ON c.id = o.customer_id
-WHERE o.customer_id IS NULL;
-```
-
-These queries should help you manage the `orders` and `customers` tables in MySQL, including creating, reading, updating, and deleting records. Adjust the queries based on your actual table structure and requirements.
 
 
 
-
-
-
-
-
-
-This is for FrontEnd
+Frontend Design
 
 
 HTML
@@ -533,57 +567,57 @@ HTML
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Management</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Order Management System</h1>
-
-    <div id="customer-form">
-        <h2>Customer</h2>
-        <input type="hidden" id="customer-id">
-        <label for="customer-name">Name:</label>
-        <input type="text" id="customer-name">
-        <label for="customer-email">Email:</label>
-        <input type="email" id="customer-email">
-        <label for="customer-phone">Phone:</label>
-        <input type="text" id="customer-phone">
-        <label for="customer-address">Address:</label>
-        <textarea id="customer-address"></textarea>
-        <button onclick="createCustomer()">Create Customer</button>
-        <button onclick="updateCustomer()">Update Customer</button>
+    <div class="container">
+        <h1>Order Management</h1>
+        <div class="form-container">
+            <form id="orderForm">
+                <label for="sku">SKU:</label>
+                <input type="text" id="sku" name="sku" required>
+                <label for="shipped_qty">Shipped Quantity:</label>
+                <input type="number" id="shipped_qty" name="shipped_qty" required>
+                <label for="status">Status:</label>
+                <input type="text" id="status" name="status" required>
+                <label for="ship_date">Ship Date:</label>
+                <input type="date" id="ship_date" name="ship_date" required>
+                <label for="delivered_date">Delivered Date:</label>
+                <input type="date" id="delivered_date" name="delivered_date">
+                <label for="transporter">Transporter:</label>
+                <input type="text" id="transporter" name="transporter" required>
+                <label for="transporter_code">Transporter Code:</label>
+                <input type="number" id="transporter_code" name="transporter_code" required>
+                <label for="channel">Channel:</label>
+                <input type="text" id="channel" name="channel" required>
+                <label for="customer_id">Customer ID:</label>
+                <input type="number" id="customer_id" name="customer_id" required>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+        <div class="orders-container">
+            <h2>Orders</h2>
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Order No</th>
+                        <th>SKU</th>
+                        <th>Shipped Quantity</th>
+                        <th>Status</th>
+                        <th>Ship Date</th>
+                        <th>Delivered Date</th>
+                        <th>Transporter</th>
+                        <th>Transporter Code</th>
+                        <th>Channel</th>
+                        <th>Customer ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Orders will be populated here -->
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <div id="order-form">
-        <h2>Order</h2>
-        <input type="hidden" id="order-no">
-        <label for="order-sku">SKU:</label>
-        <input type="text" id="order-sku">
-        <label for="order-shipped-qty">Shipped Quantity:</label>
-        <input type="number" id="order-shipped-qty">
-        <label for="order-status">Status:</label>
-        <input type="text" id="order-status">
-        <label for="order-ship-date">Ship Date:</label>
-        <input type="date" id="order-ship-date">
-        <label for="order-delivered-date">Delivered Date:</label>
-        <input type="date" id="order-delivered-date">
-        <label for="order-transporter">Transporter:</label>
-        <input type="text" id="order-transporter">
-        <label for="order-transporter-code">Transporter Code:</label>
-        <input type="number" id="order-transporter-code">
-        <label for="order-channel">Channel:</label>
-        <input type="text" id="order-channel">
-        <label for="order-customer-id">Customer ID:</label>
-        <input type="number" id="order-customer-id">
-        <button onclick="createOrder()">Create Order</button>
-        <button onclick="updateOrder()">Update Order</button>
-    </div>
-
-    <h2>Records</h2>
-    <button onclick="fetchCustomers()">Fetch Customers</button>
-    <button onclick="fetchOrders()">Fetch Orders</button>
-    
-    <div id="results"></div>
-
     <script src="scripts.js"></script>
 </body>
 </html>
@@ -591,40 +625,492 @@ HTML
 
 
 
-
-
-
-
-
 CSS
+/* styles.css */
 
 body {
     font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    color: #343a40;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
     padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+    border-radius: 8px;
 }
 
 h1 {
     text-align: center;
+    color: #007bff;
 }
 
-#customer-form, #order-form {
+h2 {
+    text-align: center;
+    color: #6c757d;
+}
+
+.form-container {
     margin-bottom: 20px;
+    padding: 20px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 label {
-    display: block;
-    margin-top: 10px;
+    font-weight: bold;
+    color: #495057;
 }
 
-input, textarea {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
+input, button {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+
+input:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 button {
-    margin-top: 10px;
-    padding: 10px 20px;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.orders-container {
+    padding: 20px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #dee2e6;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+}
+
+th {
+    background-color: #007bff;
+    color: #ffffff;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+tbody tr:hover {
+    background-color: #e2e6ea;
+}
+
+
+
+JS
+
+// scripts.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchOrders();
+
+    const orderForm = document.getElementById('orderForm');
+    orderForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const formData = new FormData(orderForm);
+        const order = Object.fromEntries(formData);
+        createOrder(order);
+    });
+});
+
+function fetchOrders() {
+    fetch('http://localhost:8080/api/orders')
+        .then(response => response.json())
+        .then(data => {
+            const ordersTableBody = document.querySelector('#ordersTable tbody');
+            ordersTableBody.innerHTML = '';
+            data.forEach(order => {
+                const row = document.createElement('tr');
+                Object.values(order).forEach(value => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+                ordersTableBody.appendChild(row);
+            });
+        })
+        .catch(error => console.error('Error fetching orders:', error));
+}
+
+function createOrder(order) {
+    fetch('http://localhost:8080/api/orders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(order),
+    })
+    .then(response => {
+        if (response.ok) {
+            fetchOrders();
+            document.getElementById('orderForm').reset();
+        } else {
+            console.error('Error creating order:', response.statusText);
+        }
+    })
+    .catch(error => console.error('Error creating order:', error));
+}
+
+
+
+POSTMAN OPERATIONS
+
+2. Configure Postman to Test Your API
+Create a Collection
+Open Postman.
+Create a new collection to organize your requests (optional but recommended).
+Add Requests to the Collection
+Get All Orders
+
+Method: GET
+URL: http://localhost:8080/api/orders
+Click Send to fetch all orders.
+Create a New Order
+
+Method: POST
+URL: http://localhost:8080/api/orders
+Body: Select raw and JSON format.
+Example JSON Body:
+json
+Copy code
+{
+    "sku": "12345",
+    "shippedQty": 10,
+    "status": "Shipped",
+    "shipDate": "2024-08-05",
+    "deliveredDate": "2024-08-10",
+    "transporter": "DHL",
+    "transporterCode": 98765,
+    "channel": "Online",
+    "customerId": 1001
+}
+Click Send to create a new order.
+Update an Order
+
+Method: PUT (if you have implemented update functionality in your backend)
+URL: http://localhost:8080/api/orders/{orderNo}
+Body: Select raw and JSON format.
+Example JSON Body (similar to the create request):
+json
+Copy code
+{
+    "sku": "12345",
+    "shippedQty": 10,
+    "status": "Delivered",
+    "shipDate": "2024-08-05",
+    "deliveredDate": "2024-08-10",
+    "transporter": "DHL",
+    "transporterCode": 98765,
+    "channel": "Online",
+    "customerId": 1001
+}
+Click Send to update an order.
+Delete an Order
+
+Method: DELETE (if you have implemented delete functionality in your backend)
+URL: http://localhost:8080/api/orders/{orderNo}
+Click Send to delete an order.
+3. Verify Responses
+Ensure that the responses from the API match your expectations.
+Check for correct status codes (e.g., 200 OK for successful requests, 201 Created for successful POST requests).
+Inspect the response body to make sure it contains the expected data.
+Example API Endpoints and Responses
+Get All Orders
+
+Request:
+bash
+Copy code
+GET /api/orders
+Response:
+json
+Copy code
+[
+    {
+        "orderNo": 1,
+        "sku": "12345",
+        "shippedQty": 10,
+        "status": "Shipped",
+        "shipDate": "2024-08-05",
+        "deliveredDate": "2024-08-10",
+        "transporter": "DHL",
+        "transporterCode": 98765,
+        "channel": "Online",
+        "customerId": 1001
+    }
+]
+Create a New Order
+
+Request:
+bash
+Copy code
+POST /api/orders
+Body:
+json
+Copy code
+{
+    "sku": "12345",
+    "shippedQty": 10,
+    "status": "Shipped",
+    "shipDate": "2024-08-05",
+    "deliveredDate": "2024-08-10",
+    "transporter": "DHL",
+    "transporterCode": 98765,
+    "channel": "Online",
+    "customerId": 1001
+}
+Response:
+json
+Copy code
+{
+    "orderNo": 2,
+    "sku": "12345",
+    "shippedQty": 10,
+    "status": "Shipped",
+    "shipDate": "2024-08-05",
+    "deliveredDate": "2024-08-10",
+    "transporter": "DHL",
+    "transporterCode": 98765,
+    "channel": "Online",
+    "customerId": 1001
+}
+Integrate with Your Frontend
+Once you have verified that your API works correctly with Postman, you can integrate it with your frontend. Your existing fetchOrders and createOrder JavaScript functions are already set up to interact with the backend.
+
+Here’s a brief recap of those functions:
+
+Fetch Orders
+javascript
+Copy code
+function fetchOrders() {
+    fetch('http://localhost:8080/api/orders')
+        .then(response => response.json())
+        .then(data => {
+            const ordersTableBody = document.querySelector('#ordersTable tbody');
+            ordersTableBody.innerHTML = '';
+            data.forEach(order => {
+                const row = document.createElement('tr');
+                Object.values(order).forEach(value => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+                ordersTableBody.appendChild(row);
+            });
+        })
+        .catch(error => console.error('Error fetching orders:', error));
+}
+Create Order
+javascript
+Copy code
+function createOrder(order) {
+    fetch('http://localhost:8080/api/orders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(order),
+    })
+    .then(response => {
+        if (response.ok) {
+            fetchOrders();
+            document.getElementById('orderForm').reset();
+        } else {
+            console.error('Error creating order:', response.statusText);
+        }
+    })
+    .catch(error => console.error('Error creating order:', error));
+}
+With these steps, your frontend should be able to communicate with your Spring Boot backend effectively.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+README
+
+
+Great! Since you already have an API to interact with, you can integrate your frontend with this API to perform CRUD operations. I'll guide you through connecting your frontend to this API.
+
+Update Your Frontend to Connect to the API
+HTML (No changes needed):
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Order Management</h1>
+        <div class="form-container">
+            <form id="orderForm">
+                <label for="sku">SKU:</label>
+                <input type="text" id="sku" name="sku" required>
+                <label for="shipped_qty">Shipped Quantity:</label>
+                <input type="number" id="shipped_qty" name="shipped_qty" required>
+                <label for="status">Status:</label>
+                <input type="text" id="status" name="status" required>
+                <label for="ship_date">Ship Date:</label>
+                <input type="date" id="ship_date" name="ship_date" required>
+                <label for="delivered_date">Delivered Date:</label>
+                <input type="date" id="delivered_date" name="delivered_date">
+                <label for="transporter">Transporter:</label>
+                <input type="text" id="transporter" name="transporter" required>
+                <label for="transporter_code">Transporter Code:</label>
+                <input type="number" id="transporter_code" name="transporter_code" required>
+                <label for="channel">Channel:</label>
+                <input type="text" id="channel" name="channel" required>
+                <label for="customer_id">Customer ID:</label>
+                <input type="number" id="customer_id" name="customer_id" required>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+        <div class="orders-container">
+            <h2>Orders</h2>
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Order No</th>
+                        <th>SKU</th>
+                        <th>Shipped Quantity</th>
+                        <th>Status</th>
+                        <th>Ship Date</th>
+                        <th>Delivered Date</th>
+                        <th>Transporter</th>
+                        <th>Transporter Code</th>
+                        <th>Channel</th>
+                        <th>Customer ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Orders will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="scripts.js"></script>
+</body>
+</html>
+CSS (styles.css):
+css
+Copy code
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+.form-container {
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    font-weight: bold;
+}
+
+input {
+    padding: 8px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px;
+    font-size: 16px;
     background-color: #007BFF;
     color: #fff;
     border: none;
@@ -635,122 +1121,100 @@ button:hover {
     background-color: #0056b3;
 }
 
-#results {
+table {
+    width: 100%;
+    border-collapse: collapse;
     margin-top: 20px;
 }
 
-
-JS
-const API_URL = 'http://localhost:8080'; // Adjust this URL to match your backend API
-
-// Helper function to make AJAX requests
-async function makeRequest(method, endpoint, data) {
-    try {
-        const response = await fetch(`${API_URL}/${endpoint}`, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        return response.json();
-    } catch (error) {
-        console.error('Error:', error);
-    }
+table, th, td {
+    border: 1px solid #ddd;
 }
 
-// Create a customer
-async function createCustomer() {
-    const name = document.getElementById('customer-name').value;
-    const email = document.getElementById('customer-email').value;
-    const phone = document.getElementById('customer-phone').value;
-    const address = document.getElementById('customer-address').value;
-
-    await makeRequest('POST', 'customers', { name, email, phone, address });
-    fetchCustomers(); // Refresh the list
+th, td {
+    padding: 10px;
+    text-align: left;
 }
+JavaScript (scripts.js):
+Fetch and display the orders from the API.
+Submit new orders to the API.
+javascript
+Copy code
+document.addEventListener('DOMContentLoaded', () => {
+    fetchOrders();
 
-// Update a customer
-async function updateCustomer() {
-    const id = document.getElementById('customer-id').value;
-    const name = document.getElementById('customer-name').value;
-    const email = document.getElementById('customer-email').value;
-    const phone = document.getElementById('customer-phone').value;
-    const address = document.getElementById('customer-address').value;
-
-    await makeRequest('PUT', `customers/${id}`, { name, email, phone, address });
-    fetchCustomers(); // Refresh the list
-}
-
-// Create an order
-async function createOrder() {
-    const sku = document.getElementById('order-sku').value;
-    const shippedQty = document.getElementById('order-shipped-qty').value;
-    const status = document.getElementById('order-status').value;
-    const shipDate = document.getElementById('order-ship-date').value;
-    const deliveredDate = document.getElementById('order-delivered-date').value;
-    const transporter = document.getElementById('order-transporter').value;
-    const transporterCode = document.getElementById('order-transporter-code').value;
-    const channel = document.getElementById('order-channel').value;
-    const customerId = document.getElementById('order-customer-id').value;
-
-    await makeRequest('POST', 'orders', { sku, shippedQty, status, shipDate, deliveredDate, transporter, transporterCode, channel, customerId });
-    fetchOrders(); // Refresh the list
-}
-
-// Update an order
-async function updateOrder() {
-    const orderNo = document.getElementById('order-no').value;
-    const sku = document.getElementById('order-sku').value;
-    const shippedQty = document.getElementById('order-shipped-qty').value;
-    const status = document.getElementById('order-status').value;
-    const shipDate = document.getElementById('order-ship-date').value;
-    const deliveredDate = document.getElementById('order-delivered-date').value;
-    const transporter = document.getElementById('order-transporter').value;
-    const transporterCode = document.getElementById('order-transporter-code').value;
-    const channel = document.getElementById('order-channel').value;
-    const customerId = document.getElementById('order-customer-id').value;
-
-    await makeRequest('PUT', `orders/${orderNo}`, { sku, shippedQty, status, shipDate, deliveredDate, transporter, transporterCode, channel, customerId });
-    fetchOrders(); // Refresh the list
-}
-
-// Fetch all customers
-async function fetchCustomers() {
-    const data = await makeRequest('GET', 'customers');
-    displayResults(data, 'customers');
-}
-
-// Fetch all orders
-async function fetchOrders() {
-    const data = await makeRequest('GET', 'orders');
-    displayResults(data, 'orders');
-}
-
-// Display results in the HTML
-function displayResults(data, type) {
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = `<h3>${type.charAt(0).toUpperCase() + type.slice(1)}</h3>`;
-
-    if (data.length === 0) {
-        resultsDiv.innerHTML += '<p>No records found.</p>';
-        return;
-    }
-
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
-    const tbody = document.createElement('tbody');
-
-    // Add headers
-    let headers = Object.keys(data[0]);
-    thead.innerHTML = `<tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>`;
-
-    // Add rows
-    data.forEach(record => {
-        tbody.innerHTML += `<tr>${headers.map(header => `<td>${record[header]}</td>`).join('')}</tr>`;
+    const orderForm = document.getElementById('orderForm');
+    orderForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const formData = new FormData(orderForm);
+        const order = Object.fromEntries(formData);
+        createOrder(order);
     });
+});
 
-    table.appendChild(thead);
-    table.appendChild(tbody);
-    resultsDiv.appendChild(table);
+function fetchOrders() {
+    fetch('https://companystore.vineretail.com/RestWS/api/eretail/v1/order/shipDetail')
+        .then(response => response.json())
+        .then(data => {
+            const ordersTableBody = document.querySelector('#ordersTable tbody');
+            ordersTableBody.innerHTML = '';
+            data.forEach(order => {
+                const row = document.createElement('tr');
+                Object.values(order).forEach(value => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+                ordersTableBody.appendChild(row);
+            });
+        })
+        .catch(error => console.error('Error fetching orders:', error));
 }
+
+function createOrder(order) {
+    fetch('https://companystore.vineretail.com/RestWS/api/eretail/v1/order/shipDetail', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(order),
+    })
+    .then(response => {
+        if (response.ok) {
+            fetchOrders();
+            document.getElementById('orderForm').reset();
+        } else {
+            console.error('Error creating order:', response.statusText);
+        }
+    })
+    .catch(error => console.error('Error creating order:', error));
+}
+Explanation:
+Fetching Orders:
+
+The fetchOrders function sends a GET request to the API and populates the table with the returned order data.
+Creating Orders:
+
+The createOrder function sends a POST request with the order data collected from the form.
+Form Handling:
+
+The form submission is handled by preventing the default form submission, converting the form data to a JSON object, and calling the createOrder function.
+This setup should connect your frontend to the existing API and handle order management operations.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
